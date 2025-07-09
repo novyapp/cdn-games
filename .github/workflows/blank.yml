@@ -1,0 +1,11 @@
+name: Test X-kom API
+on: [workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          curl 'https://mobileapi.x-kom.pl/api/v1/xkom/products?displayProfile=Website&criteria.useAutoFuzziness=false&childCategorySort=priority%20desc&criteria.groupIds=7&criteria.categoryIds=2536&criteria.availabilityStatus=Available&criteria.featureValueIds=164022&criteria.expand=Features%2CDepartments%2CProductMarks%2CSeo&pagination.currentPage=1&pagination.pageSize=30&sort=AvailabilityStatus%20desc%2CAccuracyB%20desc' \
+            -H 'accept: application/json, text/plain, */*' \
+            -H 'x-api-key: jfsTOgOL23CN2G8Y'
