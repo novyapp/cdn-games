@@ -1,0 +1,59 @@
+name: Deploy static assets to Pages
+
+on:
+  push:
+    branches: [main]
+    # Restrict deploy runs to content changes to avoid wasting minutes on non-asset commits.
+    paths:
+      - blog-images/**
+      - game-covers/**
+      - game-eshop-assets/**
+      - shop-logos/**
+      - webp-manifest.json
+      - CNAME
+      - .nojekyll
+      - .github/workflows/deploy.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare gh-pages worktree
+        run: |
+          git fetch origin gh-pages || true
+          if git show-ref --verify --quiet refs/heads/gh-pages; then
+            git worktree add --force ../gh-pages gh-pages
+          elif git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git worktree add --force -b gh-pages ../gh-pages origin/gh-pages
+          else
+            git worktree add --force -b gh-pages ../gh-pages
+          fi
+
+      - name: Sync only changed files
+        run: |
+          rsync -av --delete --exclude '.git' --exclude '.github' ./ ../gh-pages/
+
+      - name: Commit and push
+        run: |
+          cd ../gh-pages
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "Deploy ${GITHUB_SHA}"
+            git push origin gh-pages
+          else
+            echo "No changes to deploy"
+          fi
